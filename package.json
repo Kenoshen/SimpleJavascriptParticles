@@ -1,0 +1,19 @@
+{
+  "name": "SimpleJavascriptParticles",
+  "description": "Just a simple javascript particle engine eye candy",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kenoshen/SimpleJavascriptParticles.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-babel": "^5.0.3",
+    "grunt-contrib-clean": "^0.6.0",
+    "grunt-contrib-copy": "^0.8.1",
+    "grunt-contrib-jshint": "^0.11.3",
+    "npm": "^2.1.6",
+    "webpack": "^1.12.2"
+  }
+}

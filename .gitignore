@@ -3,3 +3,6 @@
 **.iml
 **.project
 **.classpath
+**.log
+**node_modules/
+**build/
