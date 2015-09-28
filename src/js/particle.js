@@ -21,63 +21,48 @@ function HSVtoRGB(h, s, v) {
         case 4: r = t, g = p, b = v; break;
         case 5: r = v, g = p, b = q; break;
     }
-    return new Vector(
-        Math.round(r * 255),
-        Math.round(g * 255),
-        Math.round(b * 255),
-        1);
+    return new Vector(r, g, b, 1);
 }
 
 class Particle {
-    _position
-    _velocity
-    _ttl
-
     set position(vec){this._position = vec}
     get position(){return this._position}
 
     set velocity(vec){this._velocity = vec}
     get velocity(){return this._velocity}
 
-    get color(){return HSVtoRGB(this._velocity.norm().radsTo(_Vector.UP, 1, 1))}
+    set size(f){this._size = f}
+    get size(){return this._size}
+
+    get color(){return HSVtoRGB(Math.abs(this._velocity.norm().rads()), 0.9, 1)}
+
+    //get color(){return new Vector(1, 0.5, 0.5, 1)}
+    //get color(){
+    //    let v = this._velocity.norm();
+    //    return new Vector(v.x, v.y, 1 - v.y, 1);
+    //}
 
     get ttl(){return this._ttl}
     get isDead(){return (this._ttl <= 0)}
 
-    constructor(position=_Vector.ZERO, velocity=_Vectory.ZERO){
+    constructor(position=new Vector(), velocity=new Vector()){
         this.position = position;
         this.velocity = velocity;
+        //this._ttl = null;
+        this.size = 1;
     }
 
-    toString(){return `[Pos:${this.position} Vel:${this.velocity} Col:${this.color} Ttl: ${_ttl}}]`}
+    toString(){return `[Pos:${this.position} Vel:${this.velocity} Col:${this.color} Ttl: ${this._ttl}}]`}
     update(timeDelta, friction){
         this.velocity = this.velocity.scale(1 - friction);
         this.position = this.position.add(this.velocity);
         this._ttl -= timeDelta;
+
+        this.size = this.size + (1 - Math.random() * 2) * 2;
+        if (this.size < 1) this.size = 1; else if (this.size > 50) this.size = 50;
     }
     applyForce(point, strength){
         let diff = point.sub(this.position);
-        this.velocity = diff.norm().mul(strength * Math.sqrt(diff.len())).add(this.velocity)
+        this.velocity = diff.norm().mul(strength).add(this.velocity)
     }
 }
-
-//Particle.prototype.draw = function(pixels, canvasWidth, canvasHeight, particleWidth, particleHeight)
-//{
-//    var baseIndex = 4 * (~~this.position.y * canvasWidth + ~~this.position.x);
-//    var addVect = new Vector(this.color.x * (this.color.w / 255),
-//                             this.color.y * (this.color.w / 255),
-//                             this.color.z * (this.color.w / 255),
-//                             255);
-//    var curIndex = baseIndex;
-//    for (var y = 0; y < particleHeight; y++)
-//    {
-//        for (var x = 0; x < particleWidth; x++)
-//        {
-//            pixels[curIndex + (x * 4)] += addVect.x;
-//            pixels[curIndex + 1 + (x * 4)] += addVect.y;
-//            pixels[curIndex + 2 + (x * 4)] += addVect.z;
-//            pixels[curIndex + 3 + (x * 4)] = addVect.w;
-//        }
-//        curIndex += canvasWidth * 4;
-//    }
-//};

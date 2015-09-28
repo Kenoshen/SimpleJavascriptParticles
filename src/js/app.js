@@ -1,22 +1,23 @@
 class Application {
     constructor(canvas){
-        this.display = new Display(canvas, 250, 250);
+        this.display = new Display(canvas, 2000, 2000);
         this.system = new ParticleSystem(this.display);
-        this.reqAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame;
-        this.timeDelta = 1000 / 30;
+        this.system.maxParticles = 50;
+        this.system.particleSize = 10;
+        this.system.showParticlePath = true;
+        this.timeDelta = 60 / 1000;
     }
 
     start() {
-        this.bouncingForce = new Force(this.system.randPos(), 10);
+        this.bouncingForce = new Force(this.system.randPos(), 0.5);
+        //this.bouncingForce = new Force(new Vector(this.system.display.width / 2, this.system.display.height / 2), 1);
         this.system.forces.push(this.bouncingForce);
         this.bouncingForceDir = new Vector(1, 1);
-        setInterval(() => {
-            this.system.populateParticles();
-        }, 30000);
 
+        this.system.emitters.push(new PeriodicRefreshEmitter(3000));
 
-        setInterval(this.step.bind(this), 1); // TODO: this doesn't work...
-        //this.reqAnimFrame(this.step); // TODO: this doesn't work either...
+        var that = this;
+        window.requestAnimationFrame(function(){that.step();});
     }
 
     step() {
@@ -30,6 +31,8 @@ class Application {
         }
 
         this.system.step(this.timeDelta);
-        //this.reqAnimFrame(this.step);
+
+        var that = this;
+        window.requestAnimationFrame(function(){that.step();});
     }
 }

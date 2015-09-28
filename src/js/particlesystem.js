@@ -8,6 +8,9 @@ class ParticleSystem{
         this.maxParticles = 1000;
         this.showParticlePath = false;
         this.friction = 0.0001;
+
+        this.forceColor = new Vector(0, 1, 0, 1);
+        this.forceSize = 4;
     }
 
     step(timeDelta){
@@ -16,39 +19,48 @@ class ParticleSystem{
             this.display.clear();
         }
         var imageData = this.display.context.getImageData(0, 0, this.display.width, this.display.height);
-        var pixels = imageData.data;
+        this.pixels = imageData.data;
 
         this.emitters.forEach(e => {
-            e.emit(this.particles, this.maxParticles);
+            e.emit(this);
         });
 
-        this.particles.forEach(p => {
+        for (var i = 0; i < this.particles.length; i++){
+            var p = this.particles[i];
             this.forces.forEach(f => {
-                p.applyForce(f.point, f.strength);
+                p.applyForce(f.point, f.strength * timeDelta);
             });
 
-            let nextPos = p.position.add(p.velocity);
-            if (nextPos.x < 0 || this.display.width < nextPos.x) p.velocity = new Vector(p.velocity.x * -1, p.velocity.y);
-            if (nextPos.y < 0 || this.display.height < nextPos.y) p.velocity = new Vector(p.velocity.x, p.velocity.y * -1);
+            //let nextPos = p.position.add(p.velocity);
+
+            //if (nextPos.x < 0)
+            //    p.position = new Vector(this.display.width, p.position.y);
+            //else if (this.display.width < nextPos.x)
+            //    p.position = new Vector(0, p.position.y);
+            //
+            //if (nextPos.y < 0)
+            //    p.position = new Vector(p.position.x, this.display.height);
+            //else if (this.display.height < nextPos.y)
+            //    p.position = new Vector(p.position.x, 0);
 
             p.update(timeDelta, this.friction);
 
-            let baseIndex = 4 * (~~p.position.y * this.display.width + ~~this.position.x);
-            let pCol = p.color;
-            let addCol = pCol.scale(pCol.w);
+            let baseIndex = 4 * (~~p.position.y * this.display.width + ~~p.position.x);
+            let color = p.color;
+            let addCol = color.scale(color.w).scale(255);
             var curIndex = baseIndex;
-            for (var y = 0; y < this.particleSize; y++)
+            for (var y = 0; y < p.size; y++)
             {
-                for (var x = 0; x < this.particleSize; x++)
+                for (var x = 0; x < p.size; x++)
                 {
-                    pixels[curIndex + (x * 4)] += addCol.x;
-                    pixels[curIndex + 1 + (x * 4)] += addCol.y;
-                    pixels[curIndex + 2 + (x * 4)] += addCol.z;
-                    pixels[curIndex + 3 + (x * 4)] = addCol.w;
+                    this.pixels[curIndex + (x * 4)] = addCol.x;
+                    this.pixels[curIndex + 1 + (x * 4)] = addCol.y;
+                    this.pixels[curIndex + 2 + (x * 4)] = addCol.z;
+                    this.pixels[curIndex + 3 + (x * 4)] = addCol.w;
                 }
                 curIndex += this.display.width * 4;
             }
-        });
+        }
 
         this.display.context.putImageData(imageData, 0, 0);
 
@@ -56,23 +68,14 @@ class ParticleSystem{
     }
 
     randPos(){
-        var x = Math.random() * (this.display.width - this.particleWidth);
-        var y = Math.random() * (this.display.height - this.particleHeight);
+        let x = Math.random() * this.display.width;
+        let y = Math.random() * this.display.height;
         return new Vector(x, y);
-    }
-
-    populateParticles(){
-        this.display.clear();
-        this.particles = [];
-        for (var i = 0; i < this.maxParticles; i++)
-        {
-            this.particles.push(new Particle(this.randPos()));
-        }
     }
 
     setVelocitiesToZero(){
         this.particles.forEach(p => {
-            p.velocity = _Vector.ZERO;
+            p.velocity = new Vector();
         });
     }
 }
@@ -89,9 +92,35 @@ class Emitter {
         this.point = point;
     }
 
-    emit(particles, maxParticles){
-        if (particles.length < maxParticles){
+    emit(system){ }
+    destroy() { }
+}
 
+class PeriodicRefreshEmitter extends Emitter {
+    constructor(timeout){
+        super(new Vector());
+
+        this.intervalCallback = function(){
+            if (this.system) {
+                this.system.display.clear();
+                this.system.particles = [];
+                for (var i = 0; i < this.system.maxParticles; i++) {
+                    this.system.particles.push(new Particle(this.system.randPos()));
+                }
+            }
         }
+        this.timer = setInterval(this.intervalCallback, timeout);
+    }
+
+    emit(system){
+        if (! this.system){
+            this.system = system;
+            this.intervalCallback();
+        }
+    }
+
+    destroy(){
+        this.system = null;
+        clearInterval(this.timer);
     }
 }
